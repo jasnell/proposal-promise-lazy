@@ -105,9 +105,9 @@ One use case for lazily evaluated promises is to implement a task queue in which
 // Set up a task queue of GET requests to perform.
 const tasks = [
   Promise.lazy((res) => res(fetch('http://example.com/1'))),
-  Promise.lazh((res) => res(fetch('http://example.com/2'))),
-  Promise.lazh((res) => res(fetch('http://example.com/3'))),
-  Promise.lazh((res) => res(fetch('http://example.com/4'))),
+  Promise.lazy((res) => res(fetch('http://example.com/2'))),
+  Promise.lazy((res) => res(fetch('http://example.com/3'))),
+  Promise.lazy((res) => res(fetch('http://example.com/4'))),
 ];
 
 // Perform each fetch in sequence
