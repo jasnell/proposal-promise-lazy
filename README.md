@@ -1,6 +1,6 @@
 # `Promise.lazy(...)`
 
-Today, Promises in JavaScript are evaluated eagerly. For instance, given the example:
+Today, Promises in JavaScript are eager. For instance, given the example:
 
 ```js
 const promise = new Promise((res, rej) => {
