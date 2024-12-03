@@ -34,7 +34,7 @@ console.log(called);  // true
 
 While the `Promise` returned by `Promise.lazy(...)` has no attached reactions, the callback remains pending.
 
-Once a reaction is attached to the `Promise` (using `await`, `then(...)`, `catch(...)`, or `finally(...)`), the callback passed in to `Promise.lazy(...)` is scheduled to run as a microtask. Errors synchronously thrown by the callback are caught and used to reject the `Promise`. The signature of the callback function pasesed to `Promise.lazy(...)` is identical to that passed into the Promise constructor.
+Once a reaction is attached to the `Promise` (using `await`, `then(...)`, `catch(...)`, or `finally(...)`), the callback passed in to `Promise.lazy(...)` is scheduled to run as a microtask. Errors synchronously thrown by the callback are caught and used to reject the `Promise`. The signature of the callback function passed to `Promise.lazy(...)` is identical to that passed into the Promise constructor.
 
 Currently, this model is implementable using a custom thenable:
 
