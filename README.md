@@ -81,7 +81,7 @@ If the lazy Promise is never awaited, however, the callback is never evaluated.
 The callback is invoked with the `AsyncContext` that is in scope at the time `Promise.lazy(...)` is called.
 
 ```js
-const ac = new AsyncContext.Variaable();
+const ac = new AsyncContext.Variable();
 
 const p = ac.run(123, () => Promise.lazy((res) => res(ac.get())));
 
