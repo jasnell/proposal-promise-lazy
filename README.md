@@ -147,3 +147,11 @@ while (tasks.length > 0) {
 ```
 
 While this specific example is a bit silly on it's own, it's not difficult to imagine a more complex (and useful) implementation.
+
+## Use cases: Examples in the wild
+
+Both of these make use of custom thenables to intentionally defer work until the promise is actually awaited/consumed
+
+* avvio - https://github.com/fastify/avvio/blob/18f924a748df0959824752bba0e584017b62e2d5/lib/thenify.js#L50
+* fastify - https://github.com/fastify/fastify/blob/87f9f20687c938828f1138f91682d568d2a31e53/lib/reply.js#L455
+
