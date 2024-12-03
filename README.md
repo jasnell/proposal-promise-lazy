@@ -92,6 +92,28 @@ ac.run('abc', () => {
 });
 ```
 
+## `promise.thenLazy(thenHandler[, catchHandler])`
+## `promise.catchLazy(catchHandler)`
+## `promise.finallyLazy(finallyHandler)`
+
+These variations on `then()`, `catch()`, and `finally()` return Promises whose continuations are lazily evaluated only when they are actually followed.
+
+For example, in the following example, the `then` callback is invoked immediately on the next drain of the microtask queue after the `promise` is resolved:
+
+```js
+const p = Promise.resolve(1).then((val) => console.log(val));
+```
+
+However, using `thenLazy(...)`, the callback passed into `thenLazy(...)` is not invoked until a continuation is attached to the promise returned.
+
+```js
+const p = Promise.resolve(1).thenLazy((val) => console.log(val));
+
+{ drain the microtask queue } ... the then function is not actually invoked yet.
+
+p.then(() => {});  // the continuation is now scheduled to run on the next microtask queue drain.
+```
+
 ## Prior art
 
 * https://austingil.com/lazy-promises/
