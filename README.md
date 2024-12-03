@@ -16,7 +16,7 @@ let called = false;
 let val = 123;
 
 const promise = Promise.lazy((res) => {
-  // do something lazily on when the promise is awaited
+  // do something lazily only when the promise is awaited
   called = true;
   console.log(val);  // 'abc'
   res(123);
