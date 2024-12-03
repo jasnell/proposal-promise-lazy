@@ -114,6 +114,13 @@ const p = Promise.resolve(1).thenLazy((val) => console.log(val));
 p.then(() => {});  // the continuation is now scheduled to run on the next microtask queue drain.
 ```
 
+The key idea is to defer the actual invocation of a Promise handler or continutation until there is something explicitly waiting on the result.
+
+## Other name options
+
+* `Promise.lazy()` or `Promise.defer()` etc
+* `promise.prototype.thenLazy()` or `promise.prototype.lazyThen(...)` or `promise.prototype.deferredThen(...)`, etc
+
 ## Prior art
 
 * https://austingil.com/lazy-promises/
