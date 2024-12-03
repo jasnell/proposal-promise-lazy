@@ -39,6 +39,7 @@ Once a reaction is attached to the `Promise` (using `await`, `then(...)`, `catch
 Currently, this model is implementable using a custom thenable:
 
 ```js
+// Current approach that this proposal is seeking to replace....
 class LazyPromise {
   #callback = undefined;
   constructor(callback) {
