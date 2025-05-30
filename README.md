@@ -148,6 +148,34 @@ while (tasks.length > 0) {
 
 While this specific example is a bit silly on it's own, it's not difficult to imagine a more complex (and useful) implementation.
 
+## Use case: Avoiding Unhandled Rejection Bookkeeping Overhead
+
+In many many implementations of the Web platform standard `unhandledRejection` event, it is often necessary to implement additional book keeping when a promise rejection is not handled immediately since the mechanisms for reporting unhandled rejections occur synchronously.
+
+* https://chromium.googlesource.com/chromium/src/+/1edacd5d66d5b1642a4c4d9a411717150be8e8e9/third_party/WebKit/Source/bindings/core/v8/RejectedPromises.cpp?pli=1#
+* https://github.com/nodejs/node/blob/a8e9f634d3e5b0fb1a5c3f5e22a8193adba30cff/lib/internal/process/promises.js#L439
+
+Because promise rejection events are typically reported synchronously immediately when the promise is rejected, the additional book keeping typically causes the `'unhandledrejection'` event to be deferred until after the current execution context completes just in case the `catch` handler was added immediately after the rejection:
+
+```js
+const rejected = Promise.reject(new Error('boom'));
+// do other stuff
+rejected.catch(() => {}); // handle the promise rejection
+```
+
+In this example, the JS engine will typically notify the runtime about the unhandled rejection immediately when it occurs when `Promise.reject(...)` is called, but then will report a *second* event indicating that, nevermind, the promise rejection was handled afterall.
+
+With `Promise.defer(...)` this additional book keeping can be avoided entirely because the rejection will not occur until after the catch handler has a chance to be installed:
+
+```js
+const deferred = Promise.defer((res, rej) => rej(new Error('boom')));
+// The rejection has not occurred yet, and therefore we can avoid the additional book keeping necessary to track the rejection
+deferred.catch(() => {}); // Adding the catch handler causes the deferred promise to be scheduled.
+// When the rejection occurs the handler is already attached.
+```
+
+Unfortunately hosts cannot completely eliminate the additional book keeping since the current existing Promise handling model remains unchanged, but use of `Promise.defer` by an application can eliminate/reduce the need for the application to use the `unhandledrejection` and `rejectionhandled` events and save the runtime the cost of the additional book keeping in scenarios where it makes sense.
+
 ## Use cases: Examples in the wild
 
 Both of these make use of custom thenables to intentionally defer work until the promise is actually awaited/consumed
