@@ -1,4 +1,4 @@
-# `Promise.lazy(...)`
+# `Promise.defer(...)`
 
 Today, Promises in JavaScript are eager. For instance, given the example:
 
@@ -9,14 +9,14 @@ const promise = new Promise((res, rej) => {
 promise.then(() => {});
 ```
 
-The callback passed into the Promise constructor is invoked immediately by the Promise constructor itself. For most cases this is just fine. However, it does present a challenge in some edge cases where the work might be relevant only if someone is actually interested in the result. This proposal introduces lazily-evaluated Promises.
+The callback passed into the Promise constructor is invoked immediately by the Promise constructor itself. For most cases this is just fine. However, it does present a challenge in some edge cases where the work might be relevant only if someone is actually interested in the result or when it is beneficial to defer the work until after a complete promise chain has been set up. This proposal introduces lazily-evaluated Promises.
 
 ```js
 let called = false;
 let val = 123;
 
-const promise = Promise.lazy((res) => {
-  // do something lazily only when the promise is awaited
+const promise = Promise.defer((res) => {
+  // do something only when the promise is awaited
   called = true;
   console.log(val);  // 'abc'
   res(123);
@@ -32,15 +32,15 @@ console.log(result);  // 123
 console.log(called);  // true
 ```
 
-While the `Promise` returned by `Promise.lazy(...)` has no attached reactions, the callback remains pending.
+While the `Promise` returned by `Promise.defer(...)` has no attached reactions, the callback remains pending.
 
-Once a reaction is attached to the `Promise` (using `await`, `then(...)`, `catch(...)`, or `finally(...)`), the callback passed in to `Promise.lazy(...)` is scheduled to run as a microtask. Errors synchronously thrown by the callback are caught and used to reject the `Promise`. The signature of the callback function passed to `Promise.lazy(...)` is identical to that passed into the Promise constructor.
+Once a reaction is attached to the `Promise` (using `await`, `then(...)`, `catch(...)`, or `finally(...)`), the callback passed in to `Promise.defer(...)` is scheduled to run as a microtask. Errors synchronously thrown by the callback are caught and used to reject the `Promise`. The signature of the callback function passed to `Promise.defer(...)` is identical to that passed to the Promise constructor.
 
 Currently, this model is implementable using a custom thenable:
 
 ```js
 // Current approach that this proposal is seeking to replace....
-class LazyPromise {
+class DeferredPromise {
   #callback = undefined;
   constructor(callback) {
     this.#callback = callback;
@@ -57,17 +57,17 @@ class LazyPromise {
 }
 ```
 
-`Promise.lazy(...)` simplifies this pattern, eliminating boilerplate and using a native Promise rather than a custom thenable.
+`Promise.defer(...)` simplifies this pattern, eliminating boilerplate and using a native Promise rather than a custom thenable.
 
 The reason for scheduling the callback to run as a microtask is to make it possible to construct a complete promise chain prior to actually evaluating the callback:
 
 ```js
-Promise.lazy((res) => res(123))
+Promise.defer((res) => res(123))
    .then(doSomething)
    .catch(handleTheError)
    .finally(doOneLastThing);
 
-// The entire promise chain is created synchronously while the callback is scheduled to run on the
+// The entire promise chain is created while the callback is scheduled to run on the
 // next microtask drain
 ```
 
@@ -75,29 +75,29 @@ Like the callback passed to the Promise constructor, the callback is expected to
 
 The arguments passed into the callback are the `resolve()` and `reject()` functions, just as in the Promise construtor.
 
-If the lazy Promise is never awaited, however, the callback is never evaluated.
+If the deferred Promise is never awaited the callback is never evaluated.
 
-## `Promise.lazy(...)` and `AsyncContext`
+## `Promise.defer(...)` and `AsyncContext`
 
-The callback is invoked with the `AsyncContext` that is in scope at the time `Promise.lazy(...)` is called.
+The callback is invoked with the `AsyncContext` that is in scope at the time `Promise.defer(...)` is called.
 
 ```js
 const ac = new AsyncContext.Variable();
 
-const p = ac.run(123, () => Promise.lazy((res) => res(ac.get())));
+const p = ac.run(123, () => Promise.defer((res) => res(ac.get())));
 
 ac.run('abc', () => {
   // The callback is not scheduled to run until then is called, but runs with
-  // the context captured when Promise.lazy was called...
+  // the context captured when Promise.defer was called...
   p.then((val) => console.log(val)); // 123
 });
 ```
 
-## `promise.thenLazy(thenHandler[, catchHandler])`
-## `promise.catchLazy(catchHandler)`
-## `promise.finallyLazy(finallyHandler)`
+## `promise.deferredThen(thenHandler[, catchHandler])`
+## `promise.deferredCatch(catchHandler)`
+## `promise.deferredFinally(finallyHandler)`
 
-These variations on `then()`, `catch()`, and `finally()` return Promises whose continuations are lazily evaluated only when they are actually followed.
+These variations on `then()`, `catch()`, and `finally()` return Promises whose continuations are evaluated only when they are actually followed.
 
 For example, in the following example, the `then` callback is invoked immediately on the next drain of the microtask queue after the `promise` is resolved:
 
@@ -105,10 +105,10 @@ For example, in the following example, the `then` callback is invoked immediatel
 const p = Promise.resolve(1).then((val) => console.log(val));
 ```
 
-However, using `thenLazy(...)`, the callback passed into `thenLazy(...)` is not invoked until a continuation is attached to the promise returned.
+However, using `deferredThen(...)`, the callback passed into `deferredThen(...)` is not invoked until a continuation is attached to the promise returned.
 
 ```js
-const p = Promise.resolve(1).thenLazy((val) => console.log(val));
+const p = Promise.resolve(1).deferredThen((val) => console.log(val));
 
 { drain the microtask queue } ... the then function is not actually invoked yet.
 
@@ -119,7 +119,7 @@ The key idea is to defer the actual invocation of a Promise handler or continuta
 
 ## Other name options
 
-* `Promise.lazy()` or `Promise.defer()` etc
+* `Promise.lazy()`
 * `promise.prototype.thenLazy()` or `promise.prototype.lazyThen(...)` or `promise.prototype.deferredThen(...)`, etc
 
 ## Prior art
@@ -129,15 +129,15 @@ The key idea is to defer the actual invocation of a Promise handler or continuta
 
 ## Use case: Task Queue
 
-One use case for lazily evaluated promises is to implement a task queue in which the work to evaluate a promise is not started immediately:
+One use case for deferred promises is to implement a task queue in which the work to evaluate a promise is not started immediately:
 
 ```js
 // Set up a task queue of GET requests to perform.
 const tasks = [
-  Promise.lazy((res) => res(fetch('http://example.com/1'))),
-  Promise.lazy((res) => res(fetch('http://example.com/2'))),
-  Promise.lazy((res) => res(fetch('http://example.com/3'))),
-  Promise.lazy((res) => res(fetch('http://example.com/4'))),
+  Promise.defer((res) => res(fetch('http://example.com/1'))),
+  Promise.defer((res) => res(fetch('http://example.com/2'))),
+  Promise.defer((res) => res(fetch('http://example.com/3'))),
+  Promise.defer((res) => res(fetch('http://example.com/4'))),
 ];
 
 // Perform each fetch in sequence
