@@ -120,7 +120,7 @@ The key idea is to defer the actual invocation of a Promise handler or continuta
 ## Other name options
 
 * `Promise.lazy()`
-* `promise.prototype.thenLazy()` or `promise.prototype.lazyThen(...)` or `promise.prototype.deferredThen(...)`, etc
+* `promise.prototype.thenLazy()` or `promise.prototype.lazyThen(...)`, etc
 
 ## Prior art
 
