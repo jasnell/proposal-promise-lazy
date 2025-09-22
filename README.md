@@ -84,7 +84,10 @@ If the deferred Promise is never awaited the callback is never evaluated.
 
 The problem statement here is: JavaScript should allow for a first-class lazy Promise variant that defers execution as a queued task only when there are continuations attached.
 
-## `Promise.defer(...)` and `AsyncContext`
+----
+## Strawman API details (all up for discussion)
+
+### `Promise.defer(...)` and `AsyncContext`
 
 The callback is invoked with the `AsyncContext` that is in scope at the time `Promise.defer(...)` is called.
 
@@ -100,9 +103,9 @@ ac.run('abc', () => {
 });
 ```
 
-## `promise.deferredThen(thenHandler[, catchHandler])`
-## `promise.deferredCatch(catchHandler)`
-## `promise.deferredFinally(finallyHandler)`
+### `promise.deferredThen(thenHandler[, catchHandler])`
+### `promise.deferredCatch(catchHandler)`
+### `promise.deferredFinally(finallyHandler)`
 
 These variations on `then()`, `catch()`, and `finally()` return Promises whose continuations are evaluated only when they are actually followed.
 
@@ -124,7 +127,7 @@ p.then(() => {});  // the continuation is now scheduled to run on the next micro
 
 The key idea is to defer the actual invocation of a Promise handler or continutation until there is something explicitly waiting on the result.
 
-## Other name options
+### Other name options
 
 * `Promise.lazy()`
 * `promise.prototype.thenLazy()` or `promise.prototype.lazyThen(...)`, etc
@@ -183,7 +186,7 @@ deferred.catch(() => {}); // Adding the catch handler causes the deferred promis
 
 Unfortunately hosts cannot completely eliminate the additional book keeping since the current existing Promise handling model remains unchanged, but use of `Promise.defer` by an application can eliminate/reduce the need for the application to use the `unhandledrejection` and `rejectionhandled` events and save the runtime the cost of the additional book keeping in scenarios where it makes sense.
 
-## Use cases: Examples in the wild
+## Use case: Examples in the wild
 
 Both of these make use of custom thenables to intentionally defer work until the promise is actually awaited/consumed
 
