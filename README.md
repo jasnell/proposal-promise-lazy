@@ -1,4 +1,4 @@
-# `Promise.defer(...)`
+# Deferred Promises
 
 Today, Promises in JavaScript are eager. For instance, given the example:
 
@@ -11,10 +11,13 @@ promise.then(() => {});
 
 The callback passed into the Promise constructor is invoked immediately by the Promise constructor itself. For most cases this is just fine. However, it does present a challenge in some edge cases where the work might be relevant only if someone is actually interested in the result or when it is beneficial to defer the work until after a complete promise chain has been set up. This proposal introduces lazily-evaluated Promises.
 
+** Note: The actual syntax `Promise.defer(...)` here is not part of the actual proposal here, it's simply a stand-in to make the examples more concrete **
+
 ```js
 let called = false;
 let val = 123;
 
+// Strawman-syntax...
 const promise = Promise.defer((res) => {
   // do something only when the promise is awaited
   called = true;
@@ -34,7 +37,7 @@ console.log(called);  // true
 
 While the `Promise` returned by `Promise.defer(...)` has no attached reactions, the callback remains pending.
 
-Once a reaction is attached to the `Promise` (using `await`, `then(...)`, `catch(...)`, or `finally(...)`), the callback passed in to `Promise.defer(...)` is scheduled to run as a microtask. Errors synchronously thrown by the callback are caught and used to reject the `Promise`. The signature of the callback function passed to `Promise.defer(...)` is identical to that passed to the Promise constructor.
+Once a reaction is attached to the `Promise` (using `await`, `then(...)`, `catch(...)`, or `finally(...)`), the callback passed in to `Promise.defer(...)` is scheduled to run as a microtask. The signature of the callback function passed to `Promise.defer(...)` is identical to that passed to the Promise constructor.
 
 Currently, this model is implementable using a custom thenable:
 
@@ -76,6 +79,10 @@ Like the callback passed to the Promise constructor, the callback is expected to
 The arguments passed into the callback are the `resolve()` and `reject()` functions, just as in the Promise construtor.
 
 If the deferred Promise is never awaited the callback is never evaluated.
+
+### Problem Statement
+
+The problem statement here is: JavaScript should allow for a first-class lazy Promise variant that defers execution as a queued task only when there are continuations attached.
 
 ## `Promise.defer(...)` and `AsyncContext`
 
